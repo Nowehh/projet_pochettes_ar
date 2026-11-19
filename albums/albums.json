@@ -1,0 +1,42 @@
+{
+  "the_beatles_abbey_road": {
+    "artiste": "The Beatles",
+    "album": "Abbey Road",
+    "fichier": "the_beatles_abbey_road.jpg",
+    "musicbrainz_release_group": "9162580e-5df4-32de-80cc-f45a8d8a9b1d",
+    "titre_musicbrainz": "Abbey Road",
+    "source": "https://coverartarchive.org/release-group/9162580e-5df4-32de-80cc-f45a8d8a9b1d/front-1200"
+  },
+  "nirvana_nevermind": {
+    "artiste": "Nirvana",
+    "album": "Nevermind",
+    "fichier": "nirvana_nevermind.jpg",
+    "musicbrainz_release_group": "1b022e01-4da6-387b-8658-8678046e4cef",
+    "titre_musicbrainz": "Nevermind",
+    "source": "https://coverartarchive.org/release-group/1b022e01-4da6-387b-8658-8678046e4cef/front-1200"
+  },
+  "fleetwood_mac_rumours": {
+    "artiste": "Fleetwood Mac",
+    "album": "Rumours",
+    "fichier": "fleetwood_mac_rumours.jpg",
+    "musicbrainz_release_group": "416bb5e5-c7d1-3977-8fd7-7c9daf6c2be6",
+    "titre_musicbrainz": "Rumours",
+    "source": "https://coverartarchive.org/release-group/416bb5e5-c7d1-3977-8fd7-7c9daf6c2be6/front-1200"
+  },
+  "daft_punk_random_access_memories": {
+    "artiste": "Daft Punk",
+    "album": "Random Access Memories",
+    "fichier": "daft_punk_random_access_memories.jpg",
+    "musicbrainz_release_group": "aa997ea0-2936-40bd-884d-3af8a0e064dc",
+    "titre_musicbrainz": "Random Access Memories",
+    "source": "https://coverartarchive.org/release-group/aa997ea0-2936-40bd-884d-3af8a0e064dc/front-1200"
+  },
+  "radiohead_ok_computer": {
+    "artiste": "Radiohead",
+    "album": "OK Computer",
+    "fichier": "radiohead_ok_computer.jpg",
+    "musicbrainz_release_group": "b1392450-e666-3926-a536-22c65f834433",
+    "titre_musicbrainz": "OK Computer",
+    "source": "https://coverartarchive.org/release-group/b1392450-e666-3926-a536-22c65f834433/front-1200"
+  }
+}

@@ -1,0 +1,15 @@
+newmtl chrome
+Kd 0.75 0.75 0.78
+Ks 1 1 1
+Ns 150
+
+newmtl visiere
+Kd 1 1 1
+Ks 1 1 1
+Ns 200
+map_Kd visiere.png
+
+newmtl col
+Kd 0.04 0.04 0.04
+Ks 0.3 0.3 0.3
+Ns 20

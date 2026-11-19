@@ -1,0 +1,15 @@
+newmtl plastique_beige
+Kd 0.82 0.78 0.68
+Ks 0.1 0.1 0.1
+Ns 8
+
+newmtl ecran
+Kd 1 1 1
+Ks 0.7 0.7 0.7
+Ns 80
+map_Kd ecran.png
+
+newmtl touches
+Kd 0.7 0.67 0.6
+Ks 0.15 0.15 0.15
+Ns 10

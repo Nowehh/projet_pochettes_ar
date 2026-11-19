@@ -1,0 +1,338 @@
+{
+  "_repere": "unité = largeur de la pochette ; pochette = carré [-0.5, 0.5]² du plan y = 0 ; Y = normale sortante ; +X = droite ; +Z = bord bas (côté spectateur)",
+  "the_beatles_abbey_road": {
+    "modele": "coccinelle.obj",
+    "parties": [
+      "carrosserie",
+      "vitres",
+      "phares",
+      "roue_av_g",
+      "roue_av_g_jante",
+      "roue_av_d",
+      "roue_av_d_jante",
+      "roue_ar_g",
+      "roue_ar_g_jante",
+      "roue_ar_d",
+      "roue_ar_d_jante"
+    ],
+    "pivots": {
+      "roue_av_g": {
+        "centre": [
+          0.1,
+          0.035,
+          -0.075
+        ],
+        "axe": [
+          0,
+          0,
+          1
+        ]
+      },
+      "roue_av_g_jante": {
+        "centre": [
+          0.1,
+          0.035,
+          -0.075
+        ],
+        "axe": [
+          0,
+          0,
+          1
+        ]
+      },
+      "roue_av_d": {
+        "centre": [
+          0.1,
+          0.035,
+          0.075
+        ],
+        "axe": [
+          0,
+          0,
+          1
+        ]
+      },
+      "roue_av_d_jante": {
+        "centre": [
+          0.1,
+          0.035,
+          0.075
+        ],
+        "axe": [
+          0,
+          0,
+          1
+        ]
+      },
+      "roue_ar_g": {
+        "centre": [
+          -0.1,
+          0.035,
+          -0.075
+        ],
+        "axe": [
+          0,
+          0,
+          1
+        ]
+      },
+      "roue_ar_g_jante": {
+        "centre": [
+          -0.1,
+          0.035,
+          -0.075
+        ],
+        "axe": [
+          0,
+          0,
+          1
+        ]
+      },
+      "roue_ar_d": {
+        "centre": [
+          -0.1,
+          0.035,
+          0.075
+        ],
+        "axe": [
+          0,
+          0,
+          1
+        ]
+      },
+      "roue_ar_d_jante": {
+        "centre": [
+          -0.1,
+          0.035,
+          0.075
+        ],
+        "axe": [
+          0,
+          0,
+          1
+        ]
+      }
+    },
+    "animation": "La voiture avance le long de +X (traversée de la pochette) ; chaque roue et sa jante tournent autour de leur pivot à la vitesse v / rayon.",
+    "ombrage": "phong"
+  },
+  "nirvana_nevermind": {
+    "modele": "billet_hamecon.obj",
+    "parties": [
+      "billet",
+      "hamecon",
+      "fil"
+    ],
+    "pivots": {
+      "billet": {
+        "centre": [
+          0,
+          0.65,
+          0
+        ],
+        "axe": [
+          0,
+          0,
+          1
+        ]
+      },
+      "hamecon": {
+        "centre": [
+          0,
+          0.65,
+          0
+        ],
+        "axe": [
+          0,
+          0,
+          1
+        ]
+      },
+      "fil": {
+        "centre": [
+          0,
+          0.65,
+          0
+        ],
+        "axe": [
+          0,
+          0,
+          1
+        ]
+      }
+    },
+    "animation": "Les sommets du billet ondulent (déplacement en z sinusoïdal selon x et le temps, normales recalculées) ; l'ensemble se balance doucement autour du haut du fil.",
+    "ombrage": "phong"
+  },
+  "fleetwood_mac_rumours": {
+    "modele": "pendules.obj",
+    "parties": [
+      "potence",
+      "boule_mate",
+      "ficelle_mate",
+      "boule_brillante",
+      "ficelle_brillante"
+    ],
+    "pivots": {
+      "boule_mate": {
+        "centre": [
+          -0.055,
+          0.55,
+          0
+        ],
+        "axe": [
+          0,
+          0,
+          1
+        ]
+      },
+      "ficelle_mate": {
+        "centre": [
+          -0.055,
+          0.55,
+          0
+        ],
+        "axe": [
+          0,
+          0,
+          1
+        ]
+      },
+      "boule_brillante": {
+        "centre": [
+          0.055,
+          0.55,
+          0
+        ],
+        "axe": [
+          0,
+          0,
+          1
+        ]
+      },
+      "ficelle_brillante": {
+        "centre": [
+          0.055,
+          0.55,
+          0
+        ],
+        "axe": [
+          0,
+          0,
+          1
+        ]
+      }
+    },
+    "animation": "Chaque boule et sa ficelle oscillent autour de leur pivot (axe Z, amplitude ~25°), avec un déphasage entre les deux pendules.",
+    "ombrage": "phong"
+  },
+  "daft_punk_random_access_memories": {
+    "modele": "casque.obj",
+    "parties": [
+      "casque",
+      "visiere",
+      "col"
+    ],
+    "pivots": {
+      "casque": {
+        "centre": [
+          0,
+          0.21,
+          0
+        ],
+        "axe": [
+          0,
+          1,
+          0
+        ]
+      },
+      "visiere": {
+        "centre": [
+          0,
+          0.21,
+          0
+        ],
+        "axe": [
+          0,
+          1,
+          0
+        ]
+      },
+      "col": {
+        "centre": [
+          0,
+          0.21,
+          0
+        ],
+        "axe": [
+          0,
+          1,
+          0
+        ]
+      }
+    },
+    "animation": "Le casque tourne lentement autour de l'axe Y ; la coordonnée u de la visière défile (u + vitesse x t, texture répétée) pour animer les LED.",
+    "ombrage": "phong"
+  },
+  "radiohead_ok_computer": {
+    "modele": "ordinateur.obj",
+    "parties": [
+      "moniteur",
+      "ecran",
+      "clavier",
+      "touches"
+    ],
+    "pivots": {
+      "moniteur": {
+        "centre": [
+          0,
+          0.0,
+          0.05
+        ],
+        "axe": [
+          0,
+          1,
+          0
+        ]
+      },
+      "ecran": {
+        "centre": [
+          0,
+          0.0,
+          0.05
+        ],
+        "axe": [
+          0,
+          1,
+          0
+        ]
+      },
+      "clavier": {
+        "centre": [
+          0,
+          0.0,
+          0.05
+        ],
+        "axe": [
+          0,
+          1,
+          0
+        ]
+      },
+      "touches": {
+        "centre": [
+          0,
+          0.0,
+          0.05
+        ],
+        "axe": [
+          0,
+          1,
+          0
+        ]
+      }
+    },
+    "animation": "L'ensemble flotte (translation verticale sinusoïdale) et pivote doucement autour de Y ; la coordonnée v de l'écran défile pour faire monter le texte. Ombrage plat conseillé.",
+    "ombrage": "plat"
+  }
+}
