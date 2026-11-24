@@ -129,33 +129,45 @@ class Reconnaisseur:
         self.apparieur = cv2.BFMatcher(cv2.NORM_HAMMING)
 
         # --- Indexation ---
+        # La « base » : tous les descripteurs de toutes les pochettes, empilés, avec pour
+        # chacun sa position dans la référence et l'indice de sa pochette.
         self.references = []
-        points, descripteurs, proprietaires = [], [], []
+        self.base_points = np.zeros((0, 2), np.float32)  # (N, 2) position dans la référence
+        self.base_descripteurs = np.zeros((0, 32), np.uint8)  # (N, 32)
+        self.base_proprietaires = np.zeros(0, np.int64)  # (N,) indice dans self.references
         for id_album, infos in table.items():
             image = cv2.imread(str(dossier_albums / infos["fichier"]), cv2.IMREAD_GRAYSCALE)
             if image is None:
                 raise FileNotFoundError(dossier_albums / infos["fichier"])
-            facteur = TAILLE_REFERENCE / max(image.shape)
-            image = cv2.resize(image, None, fx=facteur, fy=facteur, interpolation=cv2.INTER_AREA)
-
-            kps, desc = self.orb_reference.detectAndCompute(image, None)
-            if desc is None:
-                continue  # pochette sans texture (ex. unie) : impossible à reconnaître avec ORB
-            hauteur, largeur = image.shape
-            self.references.append(Reference(id_album, f"{infos['artiste']} - {infos['album']}",
-                                             largeur, hauteur, len(kps)))
-            points.append(np.float32([kp.pt for kp in kps]))
-            descripteurs.append(desc)
-            # proprietaires[i] = indice (dans self.references) de la pochette du descripteur i
-            proprietaires.append(np.full(len(kps), len(self.references) - 1))
-
-        # La « base » : tous les descripteurs de toutes les pochettes, empilés.
-        self.base_points = np.concatenate(points)  # (N, 2) position dans la référence
-        self.base_descripteurs = np.concatenate(descripteurs)  # (N, 32) uint8
-        self.base_proprietaires = np.concatenate(proprietaires)  # (N,)
+            self.ajouter_reference(id_album, f"{infos['artiste']} - {infos['album']}", image)
 
         # Statistiques de la dernière image, pour l'affichage et l'oral.
         self.stats = {}
+
+    def ajouter_reference(self, id_album, titre, image):
+        """Indexe une pochette (image en niveaux de gris ou BGR). Sert au démarrage pour albums/,
+        et en cours de route pour une pochette inconnue découverte par la webcam : son image
+        redressée devient sa référence. Renvoie False si elle n'a pas assez de texture."""
+        if image.ndim == 3:
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        facteur = TAILLE_REFERENCE / max(image.shape)
+        image = cv2.resize(image, None, fx=facteur, fy=facteur, interpolation=cv2.INTER_AREA)
+
+        kps, desc = self.orb_reference.detectAndCompute(image, None)
+        if desc is None or len(kps) < MIN_INLIERS:
+            return False  # pochette sans texture (ex. unie) : impossible à reconnaître avec ORB
+        hauteur, largeur = image.shape
+        self.references.append(Reference(id_album, titre, largeur, hauteur, len(kps)))
+        self.base_points = np.concatenate([self.base_points, np.float32([kp.pt for kp in kps])])
+        self.base_descripteurs = np.concatenate([self.base_descripteurs, desc])
+        self.base_proprietaires = np.concatenate([self.base_proprietaires,
+                                                  np.full(len(kps), len(self.references) - 1)])
+        return True
+
+    def renommer(self, id_album, titre):
+        for ref in self.references:
+            if ref.id == id_album:
+                ref.titre = titre
 
     def reconnaitre(self, image_bgr):
         """Renvoie la liste des pochettes détectées, triées par nombre d'inliers décroissant."""
@@ -182,6 +194,8 @@ class Reconnaisseur:
         # texture, point qui n'est sur aucune pochette) : on le rejette.
         # La base contient toutes les pochettes : un point qui ressemble autant à deux
         # pochettes différentes est donc aussi éliminé, ce qui rend le vote plus discriminant.
+        if len(self.base_descripteurs) < 2:
+            return []  # base vide : aucune pochette indexée
         paires = self.apparieur.knnMatch(desc, self.base_descripteurs, k=2)
         bons = [p[0] for p in paires if len(p) == 2 and p[0].distance < RATIO_LOWE * p[1].distance]
         self.stats["appariements"] = len(bons)

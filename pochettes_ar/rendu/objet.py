@@ -30,8 +30,11 @@ class ObjetRendu:
     @classmethod
     def depuis_obj(cls, chemin, ombrage="phong"):
         chemin = Path(chemin)
-        parties = charger_obj(chemin)
+        return cls.depuis_parties(charger_obj(chemin), ombrage, chemin.parent)
 
+    @classmethod
+    def depuis_parties(cls, parties, ombrage="phong", dossier_textures=Path(".")):
+        """Objet à partir d'une liste de Partie en mémoire (modèles composés à la volée)."""
         materiaux = {}  # nom -> indice
         for p in parties:
             materiaux.setdefault(p.materiau.nom, (len(materiaux), p.materiau))
@@ -41,7 +44,7 @@ class ObjetRendu:
             if not m.texture:
                 return None
             if m.texture not in textures_chargees:
-                textures_chargees[m.texture] = charger_texture(chemin.parent / m.texture)
+                textures_chargees[m.texture] = charger_texture(Path(dossier_textures) / m.texture)
             return textures_chargees[m.texture]
 
         decalages = np.cumsum([0] + [len(p.maillage.sommets) for p in parties[:-1]])

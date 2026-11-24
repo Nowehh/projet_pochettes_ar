@@ -1,6 +1,8 @@
 """Association album -> objet 3D à rendre.
 
-Deux sources, par ordre de préférence :
+Trois sources :
+0. pochettes inconnues découvertes par la webcam : objet composé par IA à partir d'une
+   description de la pochette (pochettes_ar/generation/), ajouté en cours de route ;
 1. cache/<id_album>.obj : modèle généré par IA à partir de la pochette (détourage rembg +
    TripoSR + simplification, voir outils/generer_modeles_ia.ipynb, exécuté sur Google Colab) ;
 2. modeles/ : nos modèles construits par le code (outils/generer_modeles.py), d'après
@@ -27,6 +29,10 @@ class Catalogue:
         self.entrees = {k: v for k, v in table.items() if not k.startswith("_")}
         self.ia = ia  # préférer les modèles IA quand ils existent
         self._objets = {}  # (id_album, ia ?) -> ObjetRendu (ou None si illisible)
+        self.generes = {}  # id -> (ObjetRendu, entrée d'animation) des pochettes découvertes
+
+    def ajouter_genere(self, id_pochette, objet, entree):
+        self.generes[id_pochette] = (objet, entree)
 
     def chemin_ia(self, id_album):
         return self.cache / f"{id_album}.obj"
@@ -47,6 +53,8 @@ class Catalogue:
 
     def objet(self, id_album):
         """L'objet de l'album (chargé à la première demande), ou None si l'album n'a pas de modèle."""
+        if id_album in self.generes:
+            return self.generes[id_album][0]
         if self._utilise_ia(id_album):
             return self._charger_ia(id_album)
         entree = self.entrees.get(id_album)
@@ -60,8 +68,12 @@ class Catalogue:
 
     def entree(self, id_album):
         """Description (modèle, pivots, ombrage) de l'objet renvoyé par objet(), pour l'animer."""
+        if id_album in self.generes:
+            return self.generes[id_album][1]
         return ENTREE_IA if self._utilise_ia(id_album) else self.entrees.get(id_album)
 
     def source(self, id_album):
-        """« IA » ou « classique » : d'où vient l'objet affiché (pour l'affichage de contrôle)."""
+        """« IA », « classique » ou « composé » : d'où vient l'objet affiché (affichage de contrôle)."""
+        if id_album in self.generes:
+            return "composé"
         return "IA" if self._utilise_ia(id_album) else "classique"

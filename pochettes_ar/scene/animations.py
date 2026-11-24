@@ -143,7 +143,32 @@ def ia(entree, objet, t):
     return {"matrices_parties": {nom: M for nom in objet.noms_parties}}
 
 
+# --- Objets composés par IA à partir de la description d'une pochette inconnue ------------
+#     (generation/construction.py) : animation d'ensemble choisie par l'IA, et pièces qui
+#     tournent sur elles-mêmes (roues, disques, hélices) autour de leur pivot.
+
+
+def compose_ia(entree, objet, t):
+    mouvements = {
+        "tourne": lambda: rotation_autour((0, 0, 0), (0, 1, 0), 0.5 * t),
+        "flotte": lambda: translation(0, 0.03 * (1 + np.sin(1.5 * t)), 0),
+        "balance": lambda: rotation_autour((0, 0, 0), (0, 0, 1), np.radians(10) * np.sin(1.8 * t)),
+        # rebond : |sin| donne des arcs de parabole approximatifs, qui touchent le sol
+        "rebondit": lambda: translation(0, 0.08 * abs(np.sin(2.5 * t)), 0),
+    }
+    ensemble = mouvements.get(entree.get("animation"), lambda: np.eye(4))()
+    matrices = {}
+    for nom in objet.noms_parties:
+        pivot = entree["pivots"].get(nom)
+        if pivot:
+            matrices[nom] = compose(ensemble, rotation_autour(pivot["centre"], pivot["axe"], 3.0 * t))
+        else:
+            matrices[nom] = ensemble
+    return {"matrices_parties": matrices}
+
+
 ANIMATIONS = {
+    "compose": compose_ia,
     "ia": ia,
     "coccinelle": coccinelle,
     "billet_hamecon": billet_hamecon,

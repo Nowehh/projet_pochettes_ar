@@ -3,6 +3,8 @@
 Ce n'est pas du rendu 3D : simple annotation de débogage de la vision, faite avec OpenCV.
 """
 
+import unicodedata
+
 import cv2
 import numpy as np
 
@@ -10,7 +12,13 @@ from pochettes_ar.vision.calibration import CHAMP_HORIZONTAL_DEFAUT
 from pochettes_ar.vision.pose import projeter
 
 VERT = (80, 220, 60)  # BGR
+ORANGE = (40, 160, 255)
 POLICE = cv2.FONT_HERSHEY_SIMPLEX  # polices Hershey : ASCII seulement
+
+
+def ascii(texte):
+    """« Björk - Homogénic » -> « Bjork - Homogenic » : les polices Hershey n'ont pas d'accents."""
+    return unicodedata.normalize("NFKD", texte).encode("ascii", "ignore").decode()
 
 
 def dessiner_detection(image, detection, pose=None):
@@ -26,7 +34,7 @@ def dessiner_detection(image, detection, pose=None):
     if pose is not None:
         # distance en largeurs de pochette ; erreur de reprojection des 4 coins en pixels
         details += f"   d = {np.linalg.norm(pose.tvec):.1f} L   reproj {pose.erreur:.1f} px"
-    lignes = [detection.titre, details]
+    lignes = [ascii(detection.titre), details]
     x, y = coins[np.argmin(coins[:, 1])]
     y -= 12
     if y < 110:  # trop près du haut (bandeau de statistiques) : titre sous la pochette
@@ -82,3 +90,32 @@ def dessiner_infos(image, stats, ips, calibration=None, rendu=None):
     zone[:] = (zone * 0.35).astype(image.dtype)  # fond assombri, le texte reste lisible
     for k, texte in enumerate(lignes):
         cv2.putText(image, texte, (10, 22 + 24 * k), POLICE, 0.55, (255, 255, 255), 1, cv2.LINE_AA)
+
+
+def dessiner_candidat(image, coins, progression):
+    """Quadrilatère inconnu en cours d'observation : contour orange qui se remplit avec la
+    progression (0 à 1) ; à 1, la pochette est acquise et sa génération lancée."""
+    coins = coins.round().astype(np.int32)
+    cv2.polylines(image, [coins], isClosed=True, color=ORANGE, thickness=2, lineType=cv2.LINE_AA)
+    perimetre = np.concatenate([coins, coins[:1]])
+    longueurs = np.linalg.norm(np.diff(perimetre, axis=0), axis=1)
+    reste = progression * longueurs.sum()
+    for a, b, l in zip(perimetre[:-1], perimetre[1:], longueurs):
+        if reste <= 0:
+            break
+        fin = a + (b - a) * min(1.0, reste / max(l, 1e-6))
+        cv2.line(image, tuple(a), tuple(fin.round().astype(int)), ORANGE, 6, cv2.LINE_AA)
+        reste -= l
+    x, y = coins.min(axis=0)
+    cv2.putText(image, "pochette inconnue ?", (int(x), int(max(y - 10, 20))), POLICE, 0.7, ORANGE, 2, cv2.LINE_AA)
+
+
+def dessiner_guide(image, coins):
+    """Cadre guide discret au centre : y placer une pochette et appuyer sur n pour la capturer."""
+    coins = coins.round().astype(np.int32)
+    for a, b in zip(coins, np.roll(coins, -1, axis=0)):  # coins seulement, en « équerres »
+        for c, d in ((a, a + (b - a) // 6), (b, b + (a - b) // 6)):
+            cv2.line(image, tuple(c), tuple(d), (230, 230, 230), 2, cv2.LINE_AA)
+    x, y = coins[3]
+    cv2.putText(image, "n : capturer la pochette du cadre", (int(x), int(y + 28)), POLICE, 0.6,
+                (230, 230, 230), 1, cv2.LINE_AA)
