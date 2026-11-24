@@ -5,7 +5,10 @@ Conventions :
   (b - a) x (c - a) pointe du même côté que les normales aux sommets) ;
 - indices « unifiés » : le sommet i a une position, une normale et des UV (un sommet OBJ
   v/vt/vn différent devient un sommet distinct) ;
-- UV dans [0, 1], v = 0 en bas de l'image (convention OBJ).
+- UV dans [0, 1], v = 0 en bas de l'image (convention OBJ) ;
+- couleur par sommet facultative (extension courante du format : « v x y z r g b », dans
+  [0, 1]), utilisée par les modèles générés par IA (TripoSR), qui n'ont pas de texture UV.
+  Sans couleur, elle vaut (1, 1, 1) : seul le matériau compte.
 """
 
 from dataclasses import dataclass
@@ -29,12 +32,16 @@ class Maillage:
     normales: np.ndarray  # (N, 3), unitaires
     uv: np.ndarray  # (N, 2)
     triangles: np.ndarray  # (M, 3), indices dans les tableaux ci-dessus
+    couleurs: np.ndarray | None = None  # (N, 3) couleur par sommet ; None -> blanc
 
     def __post_init__(self):
         self.sommets = np.asarray(self.sommets, dtype=np.float64).reshape(-1, 3)
         self.normales = np.asarray(self.normales, dtype=np.float64).reshape(-1, 3)
         self.uv = np.asarray(self.uv, dtype=np.float64).reshape(-1, 2)
         self.triangles = np.asarray(self.triangles, dtype=np.int64).reshape(-1, 3)
+        if self.couleurs is None:
+            self.couleurs = np.ones_like(self.sommets)
+        self.couleurs = np.asarray(self.couleurs, dtype=np.float64).reshape(-1, 3)
 
     @staticmethod
     def fusion(maillages):
@@ -45,6 +52,7 @@ class Maillage:
             np.concatenate([m.normales for m in maillages]),
             np.concatenate([m.uv for m in maillages]),
             np.concatenate([m.triangles + d for m, d in zip(maillages, decalages)]),
+            np.concatenate([m.couleurs for m in maillages]),
         )
 
 
@@ -138,7 +146,7 @@ def _indice(texte, n):
 def charger_obj(chemin):
     """Lit un .obj (et son .mtl) -> liste de Partie. Polygones triangulés en éventail."""
     chemin = Path(chemin)
-    positions, coords_uv, normales = [], [], []
+    positions, couleurs, coords_uv, normales = [], [], [], []
     materiaux = {}
     groupes = []  # [nom, nom_materiau, liste de faces (triplets v/vt/vn)]
     nom, nom_mat = "defaut", None
@@ -155,6 +163,7 @@ def charger_obj(chemin):
         cle, args = mots[0], mots[1:]
         if cle == "v":
             positions.append([float(x) for x in args[:3]])
+            couleurs.append([float(x) for x in args[3:6]] if len(args) >= 6 else [1.0, 1.0, 1.0])
         elif cle == "vt":
             coords_uv.append([float(x) for x in args[:2]])
         elif cle == "vn":
@@ -191,6 +200,7 @@ def charger_obj(chemin):
             triangles.append([unifies.setdefault(coin, len(unifies)) for coin in face])
         coins = list(unifies)
         sommets = np.array([positions[v] for v, _, _ in coins])
+        couleurs_sommets = np.array([couleurs[v] for v, _, _ in coins])
         uv = np.array([coords_uv[t] if t is not None else (0.0, 0.0) for _, t, _ in coins])
         triangles = np.array(triangles)
         if all(n is not None for _, _, n in coins):
@@ -203,5 +213,5 @@ def charger_obj(chemin):
         noms_vus[nom_g] = noms_vus.get(nom_g, 0) + 1
         nom_partie = nom_g if noms_vus[nom_g] == 1 else f"{nom_g}.{noms_vus[nom_g]}"
         materiau = materiaux.get(nom_mat_g) or Materiau(nom_mat_g or "defaut")
-        parties.append(Partie(nom_partie, Maillage(sommets, norm, uv, triangles), materiau))
+        parties.append(Partie(nom_partie, Maillage(sommets, norm, uv, triangles, couleurs_sommets), materiau))
     return parties

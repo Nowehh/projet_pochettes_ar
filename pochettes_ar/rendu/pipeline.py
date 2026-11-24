@@ -37,12 +37,20 @@ DIRECTION_LUMIERE = normaliser(np.array([0.4, 1.0, 0.6]))
 
 @dataclass
 class Appel:
-    """Un « appel de dessin » : un objet, la pose de sa pochette, et éventuellement une
-    matrice modèle -> pochette par partie (animation ; identité par défaut)."""
+    """Un « appel de dessin » : un objet, la pose de sa pochette, et l'état animé de l'objet
+    (voir scene/animations.py) ; sans animation, l'objet est rendu tel que dans le fichier OBJ.
+
+    - matrices_parties : matrice modèle -> pochette par partie (identité par défaut) ;
+    - decalages_uv : décalage (du, dv) des coordonnées de texture par partie (texture qui défile) ;
+    - sommets, normales : sommets déformés (V, 3) dans le repère du modèle, à la place de ceux
+      de l'objet (animation par sommet, comme le billet qui ondule)."""
 
     objet: object  # ObjetRendu
     vue: np.ndarray  # (4, 4) pochette -> caméra (Pose.matrice())
     matrices_parties: dict = field(default_factory=dict)  # nom de partie -> (4, 4)
+    decalages_uv: dict = field(default_factory=dict)  # nom de partie -> (du, dv)
+    sommets: np.ndarray | None = None
+    normales: np.ndarray | None = None
 
 
 @dataclass
@@ -55,6 +63,7 @@ class _Prepare:
     materiaux: np.ndarray  # (n,) leur matériau
     pos_camera: np.ndarray  # (V, 3) sommets dans le repère caméra
     normales_camera: np.ndarray  # (V, 3)
+    uv: np.ndarray  # (V, 2) coordonnées de texture (décalées si la texture défile)
 
 
 class Pipeline:
@@ -85,14 +94,16 @@ class Pipeline:
 
     def _sommets_et_rasterisation(self, appel, id_depart):
         objet = appel.objet
+        sommets = objet.sommets if appel.sommets is None else appel.sommets
+        normales = objet.normales if appel.normales is None else appel.normales
 
         # 1. Traitement des sommets. Matrice modèle-vue de chaque partie :
         #    MV = M_vue · M_modele (le sommet subit d'abord M_modele, puis la pose).
         modeles = np.stack([appel.matrices_parties.get(nom, np.eye(4)) for nom in objet.noms_parties])
         mv = appel.vue @ modeles  # (P, 4, 4)
         mv_sommet = mv[objet.partie_sommet]  # (V, 4, 4) la matrice de la partie de chaque sommet
-        pos_camera = np.einsum("vij,vj->vi", mv_sommet[:, :3, :3], objet.sommets) + mv_sommet[:, :3, 3]
-        normales_camera = normaliser(np.einsum("vij,vj->vi", matrice_normales(mv)[objet.partie_sommet], objet.normales))
+        pos_camera = np.einsum("vij,vj->vi", mv_sommet[:, :3, :3], sommets) + mv_sommet[:, :3, 3]
+        normales_camera = normaliser(np.einsum("vij,vj->vi", matrice_normales(mv)[objet.partie_sommet], normales))
         # Projection : coordonnées de clip (x, y, z, w) = P (X, Y, Z, 1), avec w = Z.
         clip = np.concatenate([pos_camera, np.ones((len(pos_camera), 1))], axis=1) @ self.projection.T
 
@@ -121,7 +132,11 @@ class Pipeline:
 
         # 3. Rasterisation et z-buffer.
         rasteriser(self.tampons, e[garde][:, :, :2], e[garde][:, :, 2], 1.0 / w[tri[garde]], id_depart)
-        return _Prepare(appel, id_depart, tri[garde], objet.materiau_triangle[garde], pos_camera, normales_camera)
+        # Coordonnées de texture : un décalage constant par partie fait glisser la texture sur
+        # la surface (elle est répétée au-delà de [0, 1], voir textures.py).
+        decalages = np.array([appel.decalages_uv.get(nom, (0.0, 0.0)) for nom in objet.noms_parties], dtype=np.float64)
+        uv = objet.uv + decalages[objet.partie_sommet]
+        return _Prepare(appel, id_depart, tri[garde], objet.materiau_triangle[garde], pos_camera, normales_camera, uv)
 
     # --- Étapes 4 et 5 ------------------------------------------------------------------
 
@@ -143,7 +158,7 @@ class Pipeline:
 
             # 4a. Interpolation des attributs (barycentriques déjà corrigées de la perspective).
             position = (bc * p.pos_camera[tri]).sum(axis=1)
-            uv = (bc * p.appel.objet.uv[tri]).sum(axis=1)
+            uv = (bc * p.uv[tri]).sum(axis=1)
             if p.appel.objet.ombrage == "plat":
                 # Ombrage plat : une seule normale par face, celle du plan du triangle.
                 a, b_, c = (p.pos_camera[tri[:, k]] for k in range(3))
@@ -156,6 +171,9 @@ class Pipeline:
             objet = p.appel.objet
             mat = p.materiaux[t]
             kd = objet.kd[mat].copy()
+            if objet.couleurs is not None:
+                # Couleur par sommet, interpolée comme les autres attributs (modèles IA).
+                kd *= (bc * objet.couleurs[tri]).sum(axis=1)
             for m in np.unique(mat):
                 if objet.textures[m] is not None:
                     sel = mat == m

@@ -25,6 +25,7 @@ class ObjetRendu:
     ns: np.ndarray  # (M,) exposant de Phong
     textures: list  # (M,) texture float32 RGB, ou None
     ombrage: str = "phong"  # "phong" : normale interpolée ; "plat" : normale de la face
+    couleurs: np.ndarray | None = None  # (V, 3) couleur par sommet (modèles IA), ou None
 
     @classmethod
     def depuis_obj(cls, chemin, ombrage="phong"):
@@ -59,4 +60,5 @@ class ObjetRendu:
             ns=np.array([m.ns for m in liste], dtype=np.float64),
             textures=[texture(m) for m in liste],
             ombrage=ombrage,
+            couleurs=np.concatenate([p.maillage.couleurs for p in parties]),
         )
