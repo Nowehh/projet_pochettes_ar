@@ -1,0 +1,154 @@
+{
+  "date": "2026-11-26 12:20:43",
+  "titre": "deux hommes avec des lunettes",
+  "artiste": "",
+  "album": "",
+  "description": "deux hommes avec des lunettes",
+  "couleurs": [
+    "#0000ff",
+    "#ff0000",
+    "#ffffff"
+  ],
+  "modele_vision": "qwen3-vl:8b-instruct",
+  "composition": {
+    "nom": "deux hommes avec des lunettes",
+    "plan": [
+      "corps 1",
+      "tête 1",
+      "lunettes 1",
+      "corps 2",
+      "tête 2",
+      "lunettes 2"
+    ],
+    "animation": "balance",
+    "pieces": [
+      {
+        "forme": "boite",
+        "position": [
+          -1.0,
+          2.0,
+          0.0
+        ],
+        "taille": [
+          2.0,
+          4.0,
+          1.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "couleur": "#ffffff",
+        "brillance": 0.3,
+        "tourne_sur_soi": "aucun"
+      },
+      {
+        "forme": "sphere",
+        "position": [
+          -1.0,
+          6.0,
+          0.0
+        ],
+        "taille": [
+          1.5,
+          1.5,
+          1.5
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "couleur": "#ffffff",
+        "brillance": 0.3,
+        "tourne_sur_soi": "aucun"
+      },
+      {
+        "forme": "boite",
+        "position": [
+          -1.5,
+          5.0,
+          -0.5
+        ],
+        "taille": [
+          0.6,
+          0.8,
+          0.6
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "couleur": "#0000ff",
+        "brillance": 0.7,
+        "tourne_sur_soi": "aucun"
+      },
+      {
+        "forme": "boite",
+        "position": [
+          1.0,
+          2.0,
+          0.0
+        ],
+        "taille": [
+          2.0,
+          4.0,
+          1.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "couleur": "#ffffff",
+        "brillance": 0.3,
+        "tourne_sur_soi": "aucun"
+      },
+      {
+        "forme": "sphere",
+        "position": [
+          1.0,
+          6.0,
+          0.0
+        ],
+        "taille": [
+          1.5,
+          1.5,
+          1.5
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "couleur": "#ffffff",
+        "brillance": 0.3,
+        "tourne_sur_soi": "aucun"
+      },
+      {
+        "forme": "boite",
+        "position": [
+          1.5,
+          5.0,
+          -0.5
+        ],
+        "taille": [
+          0.6,
+          0.8,
+          0.6
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "couleur": "#0000ff",
+        "brillance": 0.7,
+        "tourne_sur_soi": "aucun"
+      }
+    ],
+    "modele": "qwen3:8b"
+  }
+}

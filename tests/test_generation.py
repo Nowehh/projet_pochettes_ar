@@ -15,6 +15,7 @@ from pochettes_ar.generation import ollama
 from pochettes_ar.generation.construction import construire
 from pochettes_ar.generation.description import MODELES_VISION, Description
 from pochettes_ar.generation.generateur import Generateur, generer
+from pochettes_ar.generation.identification import identifier, meme_pochette
 from pochettes_ar.rendu.pipeline import Appel, Pipeline
 from pochettes_ar.scene.animations import animer
 from pochettes_ar.vision.decouverte import Decouvreur, cadre_guide, ordonner_coins, redresser, trouver_quadrilatere
@@ -177,7 +178,7 @@ def fausse_description(image):
 
 def test_generer_avec_ia_simulee():
     infos, erreur = generer(np.zeros((8, 8, 3), np.uint8), decrire_=fausse_description,
-                            composer_=lambda d, c: compo.valider(VOITURE), confirmer_=lambda a, b: None)
+                            composer_=lambda d, c: compo.valider(VOITURE), identifier_=lambda d, i: None)
     assert erreur == "" and infos["titre"] == "Artiste - Album"
     assert infos["description"] == "une voiture rouge" and infos["composition"]["nom"] == "voiture"
 
@@ -221,6 +222,58 @@ def test_generateur_en_arriere_plan_et_cache(tmp_path):
 @pytest.mark.lent
 def test_generation_reelle():
     image = cv2.imread(str(T.ALBUMS / "the_beatles_abbey_road.jpg"))
-    infos, erreur = generer(image, confirmer_=lambda a, b: None)
+    infos, erreur = generer(image)
+    assert infos["titre"] == "The Beatles - Abbey Road", infos  # reconnue sans texte, vérifiée par l'image
     assert erreur == "", erreur
     construire(compo.valider(infos["composition"]))
+
+
+# --- Identification de l'album -------------------------------------------------------------------
+
+
+def album(nom):
+    return cv2.imread(str(T.ALBUMS / f"{nom}.jpg"))
+
+
+def description(texte=("", ""), reconnu=("", "")):
+    return Description(*texte, "sujet", [], "faux-modele", *reconnu)
+
+
+def faux_musicbrainz(artiste, album_):
+    base = {("The Beatles", "Abbey Road"): ("The Beatles", "Abbey Road", "mbid-abbey"),
+            ("NIRVANA", "NEVERMIND"): ("Nirvana", "Nevermind", "mbid-nevermind")}
+    return base.get((artiste, album_))
+
+
+def test_identification_par_le_texte():
+    i = identifier(description(texte=("NIRVANA", "NEVERMIND")), album("nirvana_nevermind"),
+                   confirmer_=faux_musicbrainz, telecharger_=lambda m: pytest.fail("pas besoin de l'image"))
+    assert i.titre == "Nirvana - Nevermind" and i.methode == "texte"
+
+
+def test_album_reconnu_et_verifie_par_l_image():
+    """Vue de la webcam (perspective, bruit) comparée à la pochette officielle : acceptée."""
+    vue = redresser(scene_avec_pochette(), trouver_quadrilatere(scene_avec_pochette()))
+    officielle = album("fleetwood_mac_rumours")
+    ok, inliers = meme_pochette(vue, officielle)
+    assert ok and inliers > 50
+    i = identifier(description(reconnu=("The Beatles", "Abbey Road")), album("the_beatles_abbey_road"),
+                   confirmer_=faux_musicbrainz, telecharger_=lambda m: album("the_beatles_abbey_road"))
+    assert i.titre == "The Beatles - Abbey Road" and "image" in i.methode
+
+
+def test_hallucination_rejetee():
+    """L'IA « reconnaît » Abbey Road sur la pochette de Rumours : la pochette officielle
+    d'Abbey Road ne correspond pas à l'image, le nom est refusé."""
+    i = identifier(description(reconnu=("The Beatles", "Abbey Road")), album("fleetwood_mac_rumours"),
+                   confirmer_=faux_musicbrainz, telecharger_=lambda m: album("the_beatles_abbey_road"))
+    assert i is None
+    for a, b in [("nirvana_nevermind", "the_beatles_abbey_road"), ("radiohead_ok_computer", "daft_punk_random_access_memories")]:
+        assert not meme_pochette(album(a), album(b))[0]
+
+
+def test_album_inconnu_de_musicbrainz_ou_sans_reseau():
+    assert identifier(description(reconnu=("Personne", "Rien")), album("nirvana_nevermind"),
+                      confirmer_=faux_musicbrainz) is None
+    assert identifier(description(reconnu=("The Beatles", "Abbey Road")), album("the_beatles_abbey_road"),
+                      confirmer_=faux_musicbrainz, telecharger_=lambda m: None) is None

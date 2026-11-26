@@ -16,7 +16,7 @@ from pochettes_ar.generation import ollama
 # avant de répondre (40 s au lieu de quelques secondes), même avec think = False.
 MODELES_VISION = ["qwen3-vl:8b-instruct", "qwen2.5vl:7b", "qwen3-vl:8b", "llava:7b"]
 
-CONSIGNE = """Tu regardes la pochette d'un album de musique. Réponds en JSON avec quatre champs :
+CONSIGNE = """Tu regardes la pochette d'un album de musique. Réponds en JSON avec six champs :
 - "sujet" : en 3 à 8 mots, en français, le sujet principal représenté sur l'image : un objet,
   un animal, un personnage ou un élément concret, facile à reconstruire en 3D avec des formes
   simples (exemples : « une voiture blanche », « un bébé qui nage vers un billet », « un
@@ -25,6 +25,9 @@ CONSIGNE = """Tu regardes la pochette d'un album de musique. Réponds en JSON av
 - "texte_artiste" : le nom de l'artiste s'il est écrit sur la pochette, sinon "".
 - "texte_album" : le titre de l'album s'il est écrit sur la pochette, sinon "".
   Recopie exactement, n'invente rien, ne mélange pas les deux.
+- "reconnu_artiste" et "reconnu_album" : si tu reconnais cette pochette (un album connu, même
+  sans texte écrit dessus), l'artiste et le titre de l'album. Si tu n'es pas sûr, "" pour
+  les deux : une erreur est pire qu'une absence de réponse.
 - "couleurs" : les 3 couleurs dominantes, en hexadécimal ("#rrggbb")."""
 
 SCHEMA = {
@@ -33,9 +36,11 @@ SCHEMA = {
         "sujet": {"type": "string"},
         "texte_artiste": {"type": "string"},
         "texte_album": {"type": "string"},
+        "reconnu_artiste": {"type": "string"},
+        "reconnu_album": {"type": "string"},
         "couleurs": {"type": "array", "items": {"type": "string"}},
     },
-    "required": ["sujet", "texte_artiste", "texte_album", "couleurs"],
+    "required": ["sujet", "texte_artiste", "texte_album", "reconnu_artiste", "reconnu_album", "couleurs"],
 }
 
 
@@ -46,6 +51,9 @@ class Description:
     description: str
     couleurs: list  # chaînes « #rrggbb »
     modele: str  # modèle d'IA qui a produit la description
+    # Album que l'IA pense reconnaître, même sans texte (à vérifier : voir identification.py).
+    reconnu_artiste: str = ""
+    reconnu_album: str = ""
 
     @property
     def titre(self):
@@ -70,4 +78,6 @@ def decrire(image_bgr, modele=None, taille=512):
         description=str(reponse.get("sujet", "")).strip() or "un disque vinyle",
         couleurs=[c for c in reponse.get("couleurs", []) if isinstance(c, str)][:3],
         modele=modele,
+        reconnu_artiste=str(reponse.get("reconnu_artiste", "")).strip(),
+        reconnu_album=str(reponse.get("reconnu_album", "")).strip(),
     )

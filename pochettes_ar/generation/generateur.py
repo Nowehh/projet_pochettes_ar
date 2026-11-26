@@ -2,7 +2,8 @@
 
     pochette redressée
       -> 1. description (modèle de vision)           : « un prisme qui décompose la lumière »
-      -> 2. confirmation de l'artiste et de l'album (MusicBrainz, facultatif)
+      -> 2. identification de l'album (texte lu, ou album reconnu par l'IA, vérifié avec
+            MusicBrainz et la pochette officielle ; voir identification.py)
       -> 3. composition (modèle de langage)          : pièces simples en JSON
       -> 4. construction (notre code)                : maillage, puis rendu par notre pipeline
 
@@ -27,9 +28,9 @@ from pathlib import Path
 import cv2
 
 from pochettes_ar.generation import composition as compo
-from pochettes_ar.generation import musicbrainz
 from pochettes_ar.generation.construction import construire
 from pochettes_ar.generation.description import decrire
+from pochettes_ar.generation.identification import identifier
 from pochettes_ar.generation.ollama import OllamaIndisponible
 
 
@@ -43,17 +44,18 @@ class Resultat:
     erreur: str = ""  # message si l'IA a échoué (objet de repli)
 
 
-def generer(image_bgr, decrire_=decrire, composer_=compo.composer, confirmer_=musicbrainz.confirmer):
+def generer(image_bgr, decrire_=decrire, composer_=compo.composer, identifier_=identifier):
     """Pipeline complet, synchrone. Renvoie (infos, erreur) ; ne lève pas d'exception."""
     infos = {"date": time.strftime("%Y-%m-%d %H:%M:%S"), "titre": "Pochette inconnue"}
     try:
         d = decrire_(image_bgr)
         infos.update(artiste=d.artiste, album=d.album, description=d.description,
                      couleurs=d.couleurs, modele_vision=d.modele, titre=d.titre)
-        officiel = confirmer_(d.artiste, d.album)
-        if officiel:
-            infos.update(artiste=officiel[0], album=officiel[1], musicbrainz_release_group=officiel[2],
-                         titre=f"{officiel[0]} - {officiel[1]}")
+        infos.update(reconnu_artiste=d.reconnu_artiste, reconnu_album=d.reconnu_album)
+        identite = identifier_(d, image_bgr)
+        if identite:
+            infos.update(artiste=identite.artiste, album=identite.album, titre=identite.titre,
+                         musicbrainz_release_group=identite.mbid, identification=identite.methode)
         infos["composition"] = composer_(d.description, d.couleurs)
         return infos, ""
     except (OllamaIndisponible, ValueError, KeyError, TypeError) as erreur:

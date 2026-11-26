@@ -28,7 +28,10 @@ pochettes_ar/
   rendu/         # maison : transformations, camera (P depuis K + viewport), rasterisation (Numba), zbuffer,
                  #   textures (bilinéaire), shading (Blinn-Phong), compositing, objet (buffers), pipeline (orchestration)
   scene/         # maillages + chargeur OBJ, primitives (sphère, pavé, cylindre, cône…), animations par modèle (t -> état animé), catalogue album -> modèle
-  generation/    # pochettes inconnues : ollama (client HTTP), description (vision), musicbrainz (confirmation du titre), composition (texte -> JSON validé, repli VINYLE),
+  generation/    # pochettes inconnues : ollama (client HTTP), description (vision : sujet, texte lu, album reconnu),
+                 #   identification (nom de l'album : texte lu confirmé par MusicBrainz, ou album reconnu par l'IA vérifié par MusicBrainz
+                 #   + comparaison ORB/homographie avec la pochette officielle du Cover Art Archive ; sinon pas de nom plutôt qu'un faux),
+                 #   musicbrainz (requêtes espacées de 1,1 s : au-delà, 503), composition (texte -> JSON validé, repli VINYLE),
                  #   construction (JSON -> maillage, normalisé sur la pochette), generateur (fil d'exécution à part + cache/pochettes/<id>/)
   main.py        # boucle capture -> reconnaissance -> pose -> rendu -> incrustation -> affichage
 cache/pochettes/ # pochettes découvertes : reference.jpg (image redressée = référence ORB) + pochette.json (titre, description, composition) ; rechargées au lancement, sans IA
